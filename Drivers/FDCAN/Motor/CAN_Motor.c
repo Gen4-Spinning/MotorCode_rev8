@@ -13,6 +13,7 @@ extern UART_HandleTypeDef huart3;
 extern console C;
 
 uint8_t temp;
+
 void FDCAN_runtimedataFromMotor(void)
 {
 	TxHeader.Identifier =(0xE0901<<8)|S.CAN_ID;//set to transmit runtime data frame from flyer to motherboard
@@ -73,6 +74,19 @@ void FDCAN_errorFromMotor(void)
 	}
 }
 
+uint8_t FDCAN_ParsePIDUpdate(void){
+	PU.Ki = ((RxData[1]<<8)|(RxData[2]))/1000.0f;
+	PU.Kp = ((RxData[3]<<8)|(RxData[4]))/1000.0f;
+	PU.ff_percent = ((RxData[5]<<8)|(RxData[6]))/1000.0f;
+	PU.start_offset = (RxData[7]<<8)|(RxData[8]);
+	if(checkEEPROM_PIDSettings(&PU)){
+		return 1;
+	}else{
+		return 0;
+	}
+}
+
+
 void FDCAN_parseForMotor(uint8_t my_address)
 {
 
@@ -119,17 +133,18 @@ void FDCAN_parseForMotor(uint8_t my_address)
 			C.canCHKRecieved = 1;
 			break;
 
-		case DATA_REQ_RESPONSE_FUNCTIONID:
+		case DATA_REQ_FUNCTIONID:
 			temp = RxData[0];
 			if (temp == PID_SETTINGS_REQUEST){
-				FDCAN_send_DataResponse_FromMotor(my_address);
+				FDCAN_send_DataResponse_FromMotor(my_address,temp);
 			}
 			break;
 
 		case PID_UPDATE_FUNCTIONID:
-
-
-
+			temp = FDCAN_ParsePIDUpdate(); // recieves values and checks if theyre within a range. return 1 if yes, else 0
+			if (temp){
+				FDCAN_ACKresponseFromMotor(my_address);
+			}
 
 		default:
 			break;
@@ -146,16 +161,16 @@ void FDCAN_driveresponseFromMotor(uint8_t source)
 	HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &TxHeader, TxData);
 }
 
-void FDCAN_send_DataResponse_FromMotor(uint8_t source)
+void FDCAN_send_DataResponse_FromMotor(uint8_t source,uint8_t requestType)
 {
 	TxHeader.Identifier =(0xA0501<<8)|source;
-	TxHeader.DataLength = FDCAN_DLC_BYTES_16;
+	TxHeader.DataLength = FDCAN_DLC_BYTES_12;
 
 	uint16_t Kp_out = (uint16_t)(sV.Kp * 1000);
 	uint16_t Ki_out = (uint16_t)(sV.Ki * 1000);
-	uint16_t FF_out = (uint16_t)(sV.ff_percent * 1000);
+	uint16_t FF_out = (uint16_t)(sV.ff_percent);
 	uint16_t SO_out = (uint16_t)(sV.start_offset);
-	TxData[0]=1;//PID SETTINGS RESPONSE
+	TxData[0]= requestType;//PID SETTINGS RESPONSE
 	TxData[1]= Kp_out>>8;
 	TxData[2]= Kp_out;
 	TxData[3]= Ki_out>>8;
@@ -245,17 +260,4 @@ void FDCAN_send_CANchk_Frame(void){
 	HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &TxHeader, TxData);
 }
 
-/*void FDCAN_ParsePIDUpdate(void){
-	settingVar PU;
-	PU.Ki = (RxData[1]<<8)|(RxData[2])/1000.0f;
-	PU.Kp = (RxData[3]<<8)|(RxData[4])/1000.0f;
-	PU.ff_percent = (RxData[5]<<8)|(RxData[6])/1000.0f;
-	PU.start_offset = (RxData[7]<<8)|(RxData[8]);
-	if(checkEEPROM_PIDSettings(&PU)){
-		// send Success msg to mother board.
-		// and then delay and restart this board.
-	}else{
-		//send failure msg to main board.
-	}
-}*/
 

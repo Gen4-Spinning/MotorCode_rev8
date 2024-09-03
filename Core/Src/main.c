@@ -95,6 +95,7 @@ UART_HandleTypeDef huart3;
 setup_typeDef setup;
 runtimeVarsTypeDef R;
 settingVar sV;
+settingVar PU; // for PID updating
 console C;
 ErrorsTypeDef E;
 StateTypeDef S;
