@@ -118,8 +118,6 @@ uint16_t ADC1_buff[2]={0,2008},ADC2_buff[2];
 FDCAN_RxHeaderTypeDef   RxHeader;
 uint8_t               RxData[16];
 
-//nnew variables for testing here
-uint8_t comp_interrupt;
 
 /* USER CODE END PV */
 
@@ -159,7 +157,6 @@ uint8_t dbg_rampRPM_RUStart = 0;
 uint8_t dbg_rampRPM_RDStart = 0;
 uint8_t dbg_rampRPM_ChangeRPM = 0;
 uint8_t dbg_rampRPM_Stop = 0;
-
 
 uint8_t doCalibration =0;
 uint16_t indexValue = 0;
@@ -505,7 +502,7 @@ int main(void)
 	  sV.ff_percent = 60;
 	  sV.start_offset = 0;
 	  //loadPWMDefaultSettings(&settingVarObj);
-	  setup.defaults_eepromWriteFailed += writePWMSettingsToEEPROM(&sV);
+	  setup.defaults_eepromWriteFailed += writePIDSettingsToEEPROM(&sV);
   }
   //setup PID with the correct Settings.
   setupPID(&PID,sV.Kp,sV.Ki,sV.ff_percent,sV.start_offset);
@@ -720,7 +717,6 @@ int main(void)
 	  /*-------------------------------------------------------*/
 
 	  //MAIN CONTROL FUNCTIONS FROM CAN COMMANDS
-
 	  /*if you get a resume when you are ramping down it will restart */
 	  if ((S.CAN_MSG == START)|| (S.CAN_MSG == RESUME_AFTER_PAUSE)){
 		  if (S.motorState == IDLE_STATE){
@@ -795,6 +791,22 @@ int main(void)
 			 S.CAN_MSG = NO_MSG;
 		  }
 
+	  }
+
+	  if (S.updatePIDinEeprom){
+		  if (S.motorState == IDLE_STATE){
+			  uint8_t success = writePWMSettingsToEEPROM_Manual(PU.Kp,PU.Ki,PU.ff_percent,PU.start_offset);
+			  FDCAN_Send_PIDUpdateResponse(sV.MOTID,success);
+			  if (success){
+				  HAL_Delay(10);
+				  NVIC_SystemReset();
+			  }else{
+				  // go into error State
+				  E.errorFlag = E.eepromWriteError = 1;
+				  R.motorError = 1 << ERR_EWE_SHIFT;
+			  }
+		  }
+		  S.updatePIDinEeprom = 0;
 	  }
 
     /* USER CODE END WHILE */

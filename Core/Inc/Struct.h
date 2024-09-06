@@ -23,6 +23,7 @@ typedef struct StateStruct
 	char emergencyStop;
 	char loggingEnabled;
 	char logginginternalEnable;
+	char updatePIDinEeprom;
 
 }StateTypeDef;
 

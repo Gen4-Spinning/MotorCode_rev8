@@ -28,7 +28,7 @@ void loadPWMDefaultSettings(settingVar *sV){
 	sV->ff_percent=10;
 }
 
-uint8_t writePWMSettingsToEEPROM(settingVar *stV)
+uint8_t writePIDSettingsToEEPROM(settingVar *stV)
 {
 	uint8_t dataWritten = 0;
 	dataWritten += EE_WriteFloat(stV->Kp,Kp_ADDRESS);

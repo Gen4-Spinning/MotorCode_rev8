@@ -12,7 +12,7 @@
 
 void settingsInit(settingVar *stV);
 void readSettingsFromEEPROM(settingVar *sV);
-uint8_t writePWMSettingsToEEPROM(settingVar *stV);
+uint8_t writePIDSettingsToEEPROM(settingVar *stV);
 uint8_t writePWMSettingsToEEPROM_Manual(float Kp, float Ki,uint16_t ff_percent,uint16_t startOffset);
 uint8_t writeMotorSettingsToEEPROM(settingVar *stV);
 uint8_t writeMotorSettingsToEEPROM_Manual(int8_t motorID, int16_t AMS_offset,int16_t default_direction);

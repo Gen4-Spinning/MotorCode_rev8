@@ -31,4 +31,6 @@ void FDCAN_ACKresponseFromMotor(uint8_t source);
 void FDCAN_sendDiagDoneFrame(void);
 void FDCAN_send_CANchk_Frame(void);
 void FDCAN_send_DataResponse_FromMotor(uint8_t source,uint8_t requestType);
+void FDCAN_Send_PIDUpdateResponse(uint8_t source,uint8_t response);
+
 #endif /* CAN_MOTOR_H_ */

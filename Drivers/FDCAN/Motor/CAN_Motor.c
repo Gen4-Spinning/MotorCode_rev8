@@ -13,7 +13,6 @@ extern UART_HandleTypeDef huart3;
 extern console C;
 
 uint8_t temp;
-
 void FDCAN_runtimedataFromMotor(void)
 {
 	TxHeader.Identifier =(0xE0901<<8)|S.CAN_ID;//set to transmit runtime data frame from flyer to motherboard
@@ -75,9 +74,9 @@ void FDCAN_errorFromMotor(void)
 }
 
 uint8_t FDCAN_ParsePIDUpdate(void){
-	PU.Ki = ((RxData[1]<<8)|(RxData[2]))/1000.0f;
-	PU.Kp = ((RxData[3]<<8)|(RxData[4]))/1000.0f;
-	PU.ff_percent = ((RxData[5]<<8)|(RxData[6]))/1000.0f;
+	PU.Kp = ((RxData[1]<<8)|(RxData[2]))/1000.0f;
+	PU.Ki = ((RxData[3]<<8)|(RxData[4]))/1000.0f;
+	PU.ff_percent = ((RxData[5]<<8)|(RxData[6]));
 	PU.start_offset = (RxData[7]<<8)|(RxData[8]);
 	if(checkEEPROM_PIDSettings(&PU)){
 		return 1;
@@ -143,9 +142,8 @@ void FDCAN_parseForMotor(uint8_t my_address)
 		case PID_UPDATE_FUNCTIONID:
 			temp = FDCAN_ParsePIDUpdate(); // recieves values and checks if theyre within a range. return 1 if yes, else 0
 			if (temp){
-				FDCAN_ACKresponseFromMotor(my_address);
+				S.updatePIDinEeprom = 1;
 			}
-
 		default:
 			break;
 	}
@@ -157,6 +155,18 @@ void FDCAN_driveresponseFromMotor(uint8_t source)
 	TxHeader.Identifier =(0xA0401<<8)|source;
 	TxHeader.DataLength = FDCAN_DLC_BYTES_1;
 	TxData[0]=source;
+	while(HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan1)==0);
+	HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &TxHeader, TxData);
+}
+
+void FDCAN_Send_PIDUpdateResponse(uint8_t source,uint8_t response){
+	TxHeader.Identifier =(0x0E1B01<<8)|source;
+	TxHeader.DataLength = FDCAN_DLC_BYTES_1;
+	if (response == 1){
+		TxData[0] = 1;
+	}else{
+		TxData[0] = 0;
+	}
 	while(HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan1)==0);
 	HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &TxHeader, TxData);
 }
