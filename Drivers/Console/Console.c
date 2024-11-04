@@ -235,9 +235,9 @@ uint8_t configureSettings(uint8_t setting){
 		if (firstTime == 1){
 			if (setting == CONSOLE_CANID){
 				printf("\r\n***MOTOR CAN-ID MENU***");
-				printf("\r\n Enter new Motor CAN ID (2-7)");
+				printf("\r\n Enter new Motor CAN ID (2-9)");
 				minLimit = 2;
-				maxLimit = 7;
+				maxLimit = 9;
 			}else if (setting == CONSOLE_DIRECTION){
 				printf("\r\n***MOTOR DEFAULT-DIRECTION MENU***");
 				printf("\r\n Enter Motor Default Direction (CW-0,CCW-1)");
